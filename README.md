@@ -10,8 +10,14 @@ Create virtual env:
  
 \> env\Scripts\activate
  
+ 
+Install flask:
+
 \> pip install flask
  
+ 
+Setting flask app: 
+
 \> set FLASK_APP=app.py
 
 
