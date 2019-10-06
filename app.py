@@ -1,10 +1,14 @@
 from flask import Flask
 from flask import jsonify, request, redirect, Response, render_template
 from Queue.queue import __Queue
+from concurrent.futures import ThreadPoolExecutor
 from Settings.robot_settings import Settings
 from Video_manager.video_manager import *
 
 app = Flask(__name__)
+
+executor = ThreadPoolExecutor(1)
+
 
 
 @app.route('/')
@@ -20,7 +24,6 @@ def add_move(Q = __Queue):
     __Queue.add_to_queue(Q, id)
     print(Q.get_queue(Q))
     return "success", 200
-
 
 @app.route("/connect", methods=["GET"])
 def connect():
@@ -74,6 +77,16 @@ def play_video():
     return "success", 200
 
 
+def initialize_queue(Q = __Queue):
+    Q.queue_listener(Q)
+
+
+@app.before_first_request
+def initialize():
+    executor.submit(initialize_queue)
+    return "queue listener initialized"
+
+
 if __name__ == "__main__":
-    app.run(threaded=True)
+    app.run(threaded=True,processes=2)
 

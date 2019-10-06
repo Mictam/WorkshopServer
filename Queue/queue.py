@@ -1,4 +1,5 @@
 from queue import Queue
+import time
 
 
 class __Queue:
@@ -14,3 +15,11 @@ class __Queue:
 
 	def get_queue(self):
 		return list(self.q.queue)
+
+	def queue_listener(self):
+		while True:
+			print('tasks in queue: ')
+			print(self.q.qsize())
+			print('currently processed request: ')
+			print(self.q.get())
+			time.sleep(3)
