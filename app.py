@@ -1,13 +1,20 @@
 from flask import Flask
 from flask import jsonify, request, redirect, Response, render_template
 from Queue.queue import __Queue
+from Queue.queue import Action
 from concurrent.futures import ThreadPoolExecutor
 from Settings.robot_settings import Settings
 from Video_manager.video_manager import *
 
+import qi
+import sys
+
 app = Flask(__name__)
 
 executor = ThreadPoolExecutor(1)
+
+NAO_IP = '192.168.1.102'
+NAO_PORT = 9559
 
 
 
@@ -16,20 +23,43 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route("/add_move", methods=["GET"])
+@app.route("/add_move", methods=["GET", "POST"])
 def add_move(Q = __Queue):
-    if "id" not in request.args:
-        return "Move ID not provided in request", 400
-    id = request.args.get('id')
-    __Queue.add_to_queue(Q, id)
-    print(Q.get_queue(Q))
+
+    if "type" not in request.json:
+        return "Action type not provided in request", 400
+    if "command" not in request.json:
+        return "Command not provided in request", 400
+
+    if "text" not in request.json:
+        action = Action(request.json['type'], request.json['command'])
+    else:
+        action = Action(request.json['type'], request.json['command'], request.json['text'])
+
+    __Queue.add_to_queue(Q, action)
+
     return "success", 200
 
-@app.route("/connect", methods=["GET"])
+@app.route("/connect", methods=["GET", "POST"])
 def connect():
     if "ip" not in request.args:
         return "Robot IP not provided in request", 400
+    if "port" not in request.args:
+        return "Robot port not provided in request", 400
     ip = request.args.get('ip')
+    port = request.args.get('port')
+
+    NAO_IP = ip
+    NAO_PORT = port
+
+    session = qi.Session()
+
+    try:
+        session.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+    except RuntimeError:
+        print("Can't connect to Naoqi at ip \"" + NAO_IP + "\" on port " + str(NAO_PORT) + ".\n"
+                                                                                           "Please check your script arguments. Run with -h option for help.")
+        sys.exit(1)
 
     return "success", 200
 
