@@ -23,7 +23,7 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route("/add_move", methods=["GET", "POST"])
+@app.route("/add_action", methods=["GET", "POST"])
 def add_move(Q = __Queue):
 
     if "type" not in request.json:
