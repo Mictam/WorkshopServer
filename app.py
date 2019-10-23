@@ -1,10 +1,15 @@
 from flask import Flask
 from flask import jsonify, request, redirect, Response, render_template
-from Queue.queue import __Queue
-from Queue.queue import Action
+from ActionQueue.queue import __Queue
+from ActionQueue.queue import Action
 from concurrent.futures import ThreadPoolExecutor
 from Settings.robot_settings import Settings
 from Video_manager.video_manager import *
+from IPython import get_ipython
+import socket
+import textwrap
+from collections import OrderedDict
+import paho.mqtt.publish as publish
 
 import qi
 import sys
@@ -14,7 +19,9 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(1)
 
 NAO_IP = '192.168.1.102'
-NAO_PORT = 9559
+NAO_PORT = '9559'
+Q = __Queue()
+
 
 
 
@@ -24,7 +31,7 @@ def hello_world():
 
 
 @app.route("/add_action", methods=["GET", "POST"])
-def add_move(Q = __Queue):
+def add_move():
 
     if "type" not in request.json:
         return "Action type not provided in request", 400
@@ -36,13 +43,70 @@ def add_move(Q = __Queue):
     else:
         action = Action(request.json['type'], request.json['command'], request.json['text'])
 
-    __Queue.add_to_queue(Q, action)
-
+    Q.add_to_queue(action)
     return "success", 200
+
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+def say(message):
+    """
+    Say some message.
+    It publishes to topic 'pepper/textToSpeech'.
+    Examples:
+        s hi
+        s how are you doing?
+    """
+    publish.single('pepper/textToSpeech', message, hostname=NAO_IP)
+
+aliases = OrderedDict([
+    ('s', say)
+])
+
+def exc_handler(self, etype, value, tb, tb_offset=None):
+    """
+    Replace default ipython behavior when input cannot be parsed normally.
+    Instead of raising SyntaxError or NameError, first check if input can
+    be interpreted as some alias.
+    """
+    # parse
+    print etype
+    if etype == SyntaxError:
+        cmd, message = value.text.split(' ', 1)
+        message = message.strip()
+    else:
+        # etype == NameError
+        cmd = str(value)[6:-16]
+        print value
+        # because str(value) has form: "name '...' is not defined"
+        message = None
+
+    if cmd not in aliases:
+        # no such alias defined, so use default ipython behavior
+        return self.showtraceback()
+
+    # run
+    func = aliases[cmd]
+    if message == '?':
+        print('Alias for function "{}".'.format(func.__name__))
+        print(textwrap.dedent(func.__doc__))
+    else:
+        print message
+        func(message)
 
 @app.route("/connect", methods=["GET", "POST"])
 def connect():
-    if "ip" not in request.args:
+    """if "ip" not in request.args:
         return "Robot IP not provided in request", 400
     if "port" not in request.args:
         return "Robot port not provided in request", 400
@@ -52,15 +116,21 @@ def connect():
     NAO_IP = ip
     NAO_PORT = port
 
+   # get_ipython().set_custom_exc((SyntaxError, NameError), exc_handler)
+    LOCAL_IP = get_ip()
+    RESOURCES_SERVER = "http://" + LOCAL_IP + ":8000/"
+
     session = qi.Session()
 
     try:
+        print ("tcp://{}:{}".format(NAO_IP, NAO_PORT))
         session.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
     except RuntimeError:
         print("Can't connect to Naoqi at ip \"" + NAO_IP + "\" on port " + str(NAO_PORT) + ".\n"
                                                                                            "Please check your script arguments. Run with -h option for help.")
-        sys.exit(1)
+        sys.exit(1)"""
 
+    # Say Emile in english
     return "success", 200
 
 
@@ -107,8 +177,8 @@ def play_video():
     return "success", 200
 
 
-def initialize_queue(Q = __Queue):
-    Q.queue_listener(Q)
+def initialize_queue():
+    Q.queue_listener()
 
 
 @app.before_first_request
@@ -118,5 +188,5 @@ def initialize():
 
 
 if __name__ == "__main__":
-    app.run(threaded=True,processes=2)
+    app.run(threaded=True, processes=2, host="192.168.1.106", port="5000")
 
