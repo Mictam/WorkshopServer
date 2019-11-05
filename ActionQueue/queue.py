@@ -10,10 +10,12 @@ tts = session.service("ALTextToSpeech")
 tts.setLanguage("Polish")
 
 class Action:
-	def __init__(self, type, command, text=''):
+	def __init__(self, type, command, text='', volume = '', speed = ''):
 		self.type = type
 		self.command = command
 		self.text = text
+		self.speed = speed
+		self.volume = volume
 
 	def get_type(self):
 		return self.type
@@ -34,7 +36,26 @@ class Action:
 
 	def process_generic(self):
 		if( self.command == 'turn_right'):
+			posture_service = session.service("ALRobotPosture")
+			motion_service = session.service("ALMotion")
+
 			print("moving right")
+			"""navigation_service = session.service("ALNavigation")
+			motion_service = session.service("ALMotion")
+			navigationProxy = session.service("ALNavigationProxy")
+			motion_service.wakeUp()
+			posture_service.goToPosture("StandInit", 1.0)
+			x = 0.2
+			y = 0.2
+			theta = 0.0
+			motion_service.moveTo(x, y, theta)
+			navigationProxy.navigateTo(0.2, 0.0)"""
+			posture_service.goToPosture("Stand", 0.5)
+			rounds = float(0.5)
+			turns = rounds * 1.0 * 3.14
+			time = rounds * 8.0
+			motion_service.moveTo(0.0, 0.0, 1, 4)
+
 		if (self.command == 'turn_left'):
 			print("moving left")
 		if (self.command == 'move_forward'):
@@ -50,6 +71,8 @@ class Action:
 		print(self.text)
 		tts.setVoice("naoenu")
 		tts.setLanguage("Polish")
+		tts.setVolume(self.volume)
+		tts.setParameter("speed", self.speed)
 		tts.say(self.text)
 
 
@@ -65,7 +88,6 @@ class __Queue:
 	def get_queue(self):
 		for elem in list(self.q.queue):
 			print(elem.get_command())
-
 
 	def queue_listener(self):
 		while True:
