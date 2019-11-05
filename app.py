@@ -15,8 +15,6 @@ executor = ThreadPoolExecutor(1)
 Q = __Queue()
 
 
-
-
 @app.route('/')
 def hello_world():
     return 'Hello, World!'

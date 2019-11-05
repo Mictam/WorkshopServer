@@ -4,6 +4,7 @@ Repo for BSc project
 
 Quick start:
 
+On Windows:
 Create virtual env:
 
 \> py -m venv env
@@ -24,3 +25,13 @@ Setting flask app:
 To run app type:
 
 \> flask run
+
+
+On Ubuntu:
+python2 -m virtualenv venv
+. venv/bin/activate
+pip install Flask
+pip install qi
+pip install futures
+set FLASK_APP=app.py
+flask run
