@@ -23,11 +23,24 @@ class Action:
         print("No such action is supported")
 #----------------------------------------------------------------------------------------------------------------------#
 class Speech(Action):
-    def __init__(self, distance):
-        self.distance = distance
+    def __init__(self, text, volume, speech_speed, language):
+        self.text = text
+        self.volume = volume
+        self.speech_speed = speech_speed
+        self.language = language
 
     def process_action(self):
-        return 1
+        print("saying: ")
+        session1 = qi.Session()
+        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+        tts = session1.service("ALTextToSpeech")
+        tts.setVoice("naoenu")
+        tts.setLanguage(self.language)
+        tts.setVolume(self.volume)
+        tts.setParameter("speed", self.speech_speed)
+        tts.say(self.text)
+        print("end")
+        return "Success"
 
     #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#
@@ -38,7 +51,7 @@ class Movement(Action):
     def process_action(self):
         #Pepper API calls go here
         session1 = qi.Session()
-        session1.connect("tcp://{}:{}".format("192.168.1.104", 9559))
+        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
         print("Move forward process action")
         print(self.distance)
         posture_service1 = session1.service("ALRobotPosture")
@@ -57,7 +70,7 @@ class Turn(Action):
     def process_action(self):
         #Pepper API calls go here
         session1 = qi.Session()
-        session1.connect("tcp://{}:{}".format("192.168.1.104", 9559))
+        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
         posture_service1 = session1.service("ALRobotPosture")
         motion_service1 = session1.service("ALMotion")
         print("moving left")

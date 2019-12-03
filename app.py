@@ -9,11 +9,12 @@ import json
 app = Flask(__name__)
 executor = ThreadPoolExecutor(1)
 
-SERVER_IP = "192.168.1.106"
+SERVER_IP = "192.168.1.103"
 SERVER_PORT = "5000"
 #----------------------------------------------------------------------------------------------------------------------#
 @app.route('/connect', methods=["POST"])
 def connect():
+    print(request.json['IP'])
     result = handle_connect_request(request.json)
     return result
 
@@ -94,8 +95,8 @@ def add_action():
 #----------------------------------------------------------------------------------------------------------------------#
 @app.before_first_request
 def initialize():
-    executor.submit(initialize_queue)
     executor.submit(establish_connection)
+    executor.submit(initialize_queue)
 #----------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     app.run(threaded=True, processes=2, host=SERVER_IP, port=SERVER_PORT)
