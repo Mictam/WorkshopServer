@@ -1,175 +1,101 @@
+# coding=utf-8
 from flask import Flask
 from flask import request
-from ActionQueue.queue import __Queue
-from ActionQueue.queue import Action
 from concurrent.futures import ThreadPoolExecutor
-import socket
-import werkzeug
-import qi
+from requests_handler import *
+from pepper_handler import *
 import json
-import datetime
-
-
+#----------------------------------------------------------------------------------------------------------------------#
 app = Flask(__name__)
-
 executor = ThreadPoolExecutor(1)
 
-#NAO_IP = '192.168.1.102'
-#NAO_PORT = '9559'
-Q = __Queue()
-
-
-
-
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
-
-@app.route('/connect', methods=["GET"])
+SERVER_IP = "192.168.1.106"
+SERVER_PORT = "5000"
+#----------------------------------------------------------------------------------------------------------------------#
+@app.route('/connect', methods=["POST"])
 def connect():
-    try:
-        session = qi.Session()
-        session.connect("tcp://{}:{}".format("192.168.1.102", 9559))
-    except:
-        return("Couldnt connect to the robot"), 400
+    result = handle_connect_request(request.json)
+    return result
 
-    return "Successfully connected to the robot", 200
-
-@app.route('/logger', methods=["GET", "POST"])
+@app.route('/logger', methods=["GET"])
 def logger():
-    try:
-        session = qi.Session()
-        session.connect("tcp://{}:{}".format("192.168.1.102", 9559))
-        battery_service = session.service("ALBatteryProxy")
-        camera_service = session.service("ALVideoRecorderProxy")
-        json_logger = {'is_queue_empty': Q.is_empty(), 'battery': battery_service.getBatteryCharge() + "%", 'is_recording': camera_service.isRecording()}
-        response = json.dumps(json_logger)
-    except:
-        return("Couldnt get logs"), 400
+    result = handle_logger_request()
+    return result
 
-    return response, 200
+@app.route('/scenarios', methods=["GET"])
+def get_scenarios_list():
+    result = handle_scenarios_list_request()
+    return result
 
+@app.route('/scenarios', methods=["POST"])
+def create_new_scenario():
+    result = handle_creating_new_scenario_request(request.json)
+    return result
 
-@app.route('/settings', methods=["GET", "POST"])
-def logger():
-    try:
-        session = qi.Session()
-        session.connect("tcp://{}:{}".format("192.168.1.102", 9559))
-        speech_service = session.service("ALTextToSpeechProxy")
-        if request.method == 'GET':
-            json_logger = {'volume': speech_service.getVolume(), 'speech_speed': speech_service.getParameter("speed")}
-            response = json.dumps(json_logger)
-        else:
-            speech_service.setVolume(request.json['volume'])
-            speech_service.setParameter("speed", request.json['speech_speed'])
-            response = "Success"
-    except:
-        return("Couldnt get/set setting info"), 400
+@app.route('/scenarios/remove', methods=["GET"])
+def delete_scenario():
+    result = handle_deleting_scenario_request(request.args.get['name'])
+    return result
 
-    return response, 200
+@app.route('/scenarios', methods=["GET"])
+def scenarios_get_details_and_run():
+    result = handle_scenario_run_request(request.args.get['name'], request.args.get['run'], request.args.get['start'], request.args.get['end'])
+    return result
 
+@app.route('/scenarios', methods=["PUT"])
+def modify_scenario():
+    result = handle_modify_scenario_request(request.args.get['name'], request.json)
+    return result
 
 @app.route('/sequences', methods=["GET"])
-def get_sequences():
-    #TODO
-    json_logger1 = {'name': "wave right arm"}
-    json_logger2 = {'name': "cha cha dance"}
-    response = json.dumps(json_logger1, json_logger2)
-
-    return response, 200
-
+def get_sequences_list():
+    result = handle_sequences_list_request()
+    return result
 
 @app.route('/media', methods=["GET"])
-def get_media():
-    #TODO
-    json_logger1 = {'name': "IMG001", 'file_type': "JPG"}
-    json_logger2 = {'name': "VID002", 'file_type': "MP4", 'duration': 213}
-    response = json.dumps(json_logger1, json_logger2)
-
-    return response, 200
+def get_media_list():
+    result = handle_media_list_request()
+    return result
 
 @app.route('/record', methods=["GET"])
-def record():
-    if "status" not in request.args:
-        return '"Start Date" not provided in request', 400
-    session = qi.Session()
-    session.connect("tcp://{}:{}".format("192.168.1.102", 9559))
-    camera_service = session.service("ALVideoRecorderProxy")
-    if(request.args.get("status")==True):
-        camera_service.stopRecording()
-    else:
-        timestamp = datetime.datetime.now().isoformat()
-        camera_service.startRecording("../Videos", timestamp)
-
-    return "Success", 200
+def start_stop_recording():
+    result = handle_recording_toggle_request(request)
+    return result
 
 @app.route('/recordings', methods=["GET"])
-def get_recordings():
-    #TODO
-    json_logger1 = {'name': "VID001", 'file_type': "MP4", 'duration': 13}
-    json_logger2 = {'name': "VID002", 'file_type': "MP4", 'duration': 213}
-    response = json.dumps(json_logger1, json_logger2)
+def get_recordings_list():
+    result = handle_recordings_list_request()
+    return result
 
-    return response, 200
+@app.route('/recordings', methods=["GET"])
+def play_recording():
+    result = handle_play_recording_request(request.args.get['name'])
+    return result
 
+@app.route('/settings', methods=["GET"])
+def get_settings():
+    result = handle_get_settings_request()  #ta metoda ma zostać niezaimplementowana, bo uznaliśmy, że nie ma ustawień robota, które chcielibyśmy uzyskiwać, ale perspektywicznie można to zostawić
+    return result
 
-@app.route('/upload_photo', methods = ['GET', 'POST'])
-def handle_request():
-    imagefile = request.files['image']
-    filename = werkzeug.utils.secure_filename(imagefile.filename)
-    print("\nReceived image File name : " + imagefile.filename)
-    imagefile.save(filename)
-    return "Image Uploaded Successfully", 200
+@app.route('/settings', methods=["POST"])
+def set_settings():
+    result = handle_set_settings_request(request.json)  #ta metoda ma zostać niezaimplementowana, bo uznaliśmy, że nie ma ustawień robota, które chcielibyśmy uzyskiwać, ale perspektywicznie można to zostawić
+    return result
 
-
-@app.route("/add_action", methods=["GET", "POST"])
-def add_move():
-
-    if "type" not in request.json:
-        return "Action type not provided in request", 400
-    if "command" not in request.json:
-        return "Command not provided in request", 400
-
-    if "text" not in request.json:
-        action = Action(request.json['type'], request.json['command'])
-    else:
-        action = Action(request.json['type'], request.json['command'], request.json['text'], request.json['volume'],
-                        request.json['speech_speed'], request.json['language'])
-
-    Q.add_to_queue(action)
-    return "success", 200
-
-
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('10.255.255.255', 1))
-        IP = s.getsockname()[0]
-    except:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP
-
-
-def initialize_queue():
-    Q.queue_listener()
-
-@app.route('/clear_queue')
+@app.route('/clear_queue', methods=["GET"])
 def clear_queue():
-    Q.clear_queue()
-    return "success", 200
+    result = handle_clear_queue_request()
+    return result
 
-
-
-
+@app.route('/add_action', methods=["POST"])
+def add_action():
+    result = handle_add_action_request(request.json)
+    return result
+#----------------------------------------------------------------------------------------------------------------------#
 @app.before_first_request
 def initialize():
     executor.submit(initialize_queue)
-    return "queue listener initialized"
-
-
+    executor.submit(establish_connection)
+#----------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
-    app.run(threaded=True, processes=2, host="192.168.1.106", port="5000")
-
+    app.run(threaded=True, processes=2, host=SERVER_IP, port=SERVER_PORT)
