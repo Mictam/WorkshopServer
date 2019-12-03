@@ -1,5 +1,5 @@
 # coding=utf-8
-from flask import Flask
+from flask import Flask, make_response
 from flask import request
 from concurrent.futures import ThreadPoolExecutor
 from requests_handler import *
@@ -97,6 +97,14 @@ def add_action():
 def initialize():
     executor.submit(establish_connection)
     executor.submit(initialize_queue)
+#----------------------------------------------------------------------------------------------------------------------#
+'''@app.route('/img', methods=["GET"])
+def images():
+    print(request.args["path"])
+    fullpath = "C:/PepperBsc-Server-2.7/res/img/" + request.json["path"]
+    resp = make_response(open(fullpath).read())
+    resp.content_type = "image/jpeg"
+    return resp'''
 #----------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     app.run(threaded=True, processes=2, host=SERVER_IP, port=SERVER_PORT)

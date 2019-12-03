@@ -1,10 +1,18 @@
+import os
 import qi
+import time
+import sys
+import json
+
+sys.path.insert(1, '/res/img')
 
 global session
 global text_service
 global posture_service
 global motion_service
 global tabletService
+global NAO_IP
+global NAO_PORT
 
 NAO_IP = '192.168.1.104'
 NAO_PORT = '9559'
@@ -40,7 +48,7 @@ class Speech(Action):
         tts.setParameter("speed", self.speech_speed)
         tts.say(self.text)
         print("end")
-        return "Success"
+        return "Success", 200
 
     #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#
@@ -61,7 +69,7 @@ class Movement(Action):
         turns = rounds * 0.5 * 3.14
         time = rounds * 2.0
         motion_service1.moveTo(float(self.distance), 0, 0, time)
-        return "Success"
+        return "Success", 200
 # ----------------------------------------------------------------------------------------------------------------------#
 class Turn(Action):
     def __init__(self, angle):
@@ -79,21 +87,40 @@ class Turn(Action):
         turns = rounds * 0.5 * 3.14
         time = rounds * 2.0
         motion_service1.moveTo(0.0, 0.0, float(self.angle), time)
-        return "Success"
+        return "Success", 200
 # ----------------------------------------------------------------------------------------------------------------------#
 class Sequence(Action):
-    def __init__(self, angle):
-        self.angle = angle
+    def __init__(self, type, name):
+        self.type = type
+        self.name = name
 
     def process_action(self):
-        return 1
+        session1 = qi.Session()
+        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+        return "Success", 200
         #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#
 class MediaDisplay(Action):
-    def __init__(self, angle):
-        self.angle = angle
+    def __init__(self, name, file_type):
+        self.name = name
+        self.file_type = file_type
 
     def process_action(self):
-        return 1
+        print("Media Display")
+        session1 = qi.Session()
+        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+        tabletService = session1.service("ALTabletService")
+
+        SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+        json_url = os.path.join(SITE_ROOT, 'static', 'images.json')
+        data = json.load(open(json_url))
+        print(data)
+        print(self.name)
+        url = str(data[str(self.name)])
+        print(url)
+        tabletService.showImage(url)
+        tabletService.hideImage()
+        time.sleep(5)
+        return "Success", 200
         #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#

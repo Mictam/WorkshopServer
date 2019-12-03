@@ -54,13 +54,18 @@ def handle_connect_request(json_request):
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_logger_request():
     print("handle_logger_request")
-    try:
-        battery_service = session.service("ALBatteryProxy")
-        camera_service = session.service("ALVideoRecorderProxy")
-        json_logger = {'is_queue_empty': Q.is_empty(), 'battery': battery_service.getBatteryCharge() + "%",
-                       'is_recording': camera_service.isRecording()}
-        response = json.dumps(json_logger)
 
+
+    session1 = qi.Session()
+    session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+    battery_service1 = session1.service("ALBatteryProxy")
+    camera_service1 = session1.service("ALVideoRecorderProxy")
+    print("xd")
+
+    try:
+        json_logger = {'is_queue_empty': Q.is_empty(), 'battery': battery_service1.getBatteryCharge() + "%",
+                    'is_recording': camera_service1.isRecording()}
+        response = json.dumps(json_logger)
     except:
         return ("Couldnt get logs"), 400
 
