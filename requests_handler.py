@@ -54,17 +54,14 @@ def handle_connect_request(json_request):
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_logger_request():
     print("handle_logger_request")
-
-
     session1 = qi.Session()
     session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
-    battery_service1 = session1.service("ALBatteryProxy")
-    camera_service1 = session1.service("ALVideoRecorderProxy")
-    print("xd")
+    battery_service1 = session1.service("ALBattery")
+    camera_service1 = session1.service("ALVideoRecorder")
 
     try:
-        json_logger = {'is_queue_empty': Q.is_empty(), 'battery': battery_service1.getBatteryCharge() + "%",
-                    'is_recording': camera_service1.isRecording()}
+        json_logger = {'is_queue_empty': str(Q.is_empty()), 'battery': str(battery_service1.getBatteryCharge()) + "%",
+                    'is_recording': str(camera_service1.isRecording())}
         response = json.dumps(json_logger)
     except:
         return ("Couldnt get logs"), 400
@@ -73,19 +70,56 @@ def handle_logger_request():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_scenarios_list_request():
     print("handle_scenarios_list_request")
-    #todo
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, 'static', 'scenarios.json')
+    data = json.load(open(json_url))
+    print(data)
+    return data, 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_creating_new_scenario_request(json_request):
     print("handle_creating_new_scenario_request")
-    #todo
+    name = json_request['name']
+    description = json_request['description']
+    actions = json_request['actions']
+
+    print name
+    print description
+    print actions
+
+    config = json.loads(open('static/scenarios.json').read())
+    print(config)
+    config['scenarios'].append(json_request)
+    with open('static/scenarios.json', 'w') as f:
+        f.write(json.dumps(config))
+    return "Success", 200
+
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_deleting_scenario_request(scenario_name):
     print("handle_deleting_scenario_request")
     #todo
+    return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
+
 def handle_scenario_run_request(name, run, start, end):
     print("handle_scenario_run_request")
-    #todo
+    scenarios = json.loads(open('static/scenarios.json').read())
+
+    for scenario in scenarios['scenarios']:
+        if( scenario['name'] == name ):
+            counter = 0
+            print(scenario['actions'])
+            for action in scenario['actions']:
+                print(action)
+                counter += 1
+                print(counter)
+                print(start)
+                print(end)
+                print(run)
+                if(counter >= int(start) and counter <= int(end) and run == 'true'): handle_add_action_request(action)
+            return scenario
+
+    return scenario, 200
+
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_modify_scenario_request(scenario_name):
     print("handle_modify_scenario_request")
@@ -97,29 +131,40 @@ def handle_sequences_list_request():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_media_list_request():
     print("handle_media_list_request")
-    #todo
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, 'static', 'images.json')
+    json_url2 = os.path.join(SITE_ROOT, 'static', 'videos.json')
+    photos = json.load(open(json_url))
+    videos = json.load(open(json_url2))
+
+    merged = {
+        "photos": [photos], "videos": [videos]
+    }
+    return merged, 200
+
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_recording_toggle_request(request):
     print("handle_recording_toggle_request")
     if "status" not in request.args:
-        return '"Start Date" not provided in request', 400
-    camera_service = session.service("ALVideoRecorderProxy")
-    if (request.args.get("status")):
-        camera_service.stopRecording()
+        return '"status" not provided in request', 400
+    session1 = qi.Session()
+    session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+    camera_service1 = session1.service("ALVideoRecorder")
+    if (bool(request.args.get("status"))==False):
+        camera_service1.stopRecording()
     else:
         timestamp = datetime.datetime.now().isoformat()
-        camera_service.startRecording("../Videos", timestamp)
+        camera_service1.startRecording("../Videos", timestamp)
 
     return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_recordings_list_request():
     print("handle_recordings_list_request")
     #todo
-    json_logger1 = {'name': "VID001", 'file_type': "MP4", 'duration': 13}
-    json_logger2 = {'name': "VID002", 'file_type': "MP4", 'duration': 213}
-    response = json.dumps(json_logger1, json_logger2)
+    json_logger = {"recordings": [{"name": "VID001", "file_type": "MP4", "duration": "13"},
+                   {"name": "VID002", "file_type": "MP4", "duration": "213"}]}
 
-    return response, 200
+    return json_logger, 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_play_recording_request(name):
     print("handle_play_recording_request")

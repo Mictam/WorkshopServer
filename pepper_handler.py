@@ -101,26 +101,32 @@ class Sequence(Action):
         #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#
 class MediaDisplay(Action):
-    def __init__(self, name, file_type):
-        self.name = name
-        self.file_type = file_type
+	def __init__(self, name, file_type):
+		self.name = name
+		self.file_type = file_type
 
-    def process_action(self):
-        print("Media Display")
-        session1 = qi.Session()
-        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
-        tabletService = session1.service("ALTabletService")
+	def process_action(self):
+		print("Media Display")
+		session1 = qi.Session()
+		session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+		tabletService = session1.service("ALTabletService")
 
-        SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-        json_url = os.path.join(SITE_ROOT, 'static', 'images.json')
-        data = json.load(open(json_url))
-        print(data)
-        print(self.name)
-        url = str(data[str(self.name)])
-        print(url)
-        tabletService.showImage(url)
-        tabletService.hideImage()
-        time.sleep(5)
-        return "Success", 200
-        #Pepper API calls go here
+		if (str(self.file_type) == 'jpg'):
+			SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+			json_url = os.path.join(SITE_ROOT, 'static', 'images.json')
+			data = json.load(open(json_url))
+			url = str(data[str(self.name)])
+		else:
+			SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+			json_url = os.path.join(SITE_ROOT, 'static', 'videos.json')
+			data = json.load(open(json_url))
+			url = str(data[str(self.name)])
+
+		print(url)
+		if (str(self.file_type) == 'jpg'):
+			tabletService.showImage(url)
+		else:
+			tabletService.playVideo(url)
+		return "Success", 200
+# Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#

@@ -38,10 +38,12 @@ def delete_scenario():
     result = handle_deleting_scenario_request(request.args.get['name'])
     return result
 
-@app.route('/scenarios', methods=["GET"])
+@app.route('/scenario', methods=["GET"])
 def scenarios_get_details_and_run():
-    result = handle_scenario_run_request(request.args.get['name'], request.args.get['run'], request.args.get['start'], request.args.get['end'])
-    return result
+	result = handle_scenario_run_request(request.args['name'], request.args['run'],
+										 request.args['start'], request.args['end'])
+	print(result)
+	return result
 
 @app.route('/scenarios', methods=["PUT"])
 def modify_scenario():
@@ -97,14 +99,6 @@ def add_action():
 def initialize():
     executor.submit(establish_connection)
     executor.submit(initialize_queue)
-#----------------------------------------------------------------------------------------------------------------------#
-'''@app.route('/img', methods=["GET"])
-def images():
-    print(request.args["path"])
-    fullpath = "C:/PepperBsc-Server-2.7/res/img/" + request.json["path"]
-    resp = make_response(open(fullpath).read())
-    resp.content_type = "image/jpeg"
-    return resp'''
 #----------------------------------------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     app.run(threaded=True, processes=2, host=SERVER_IP, port=SERVER_PORT)
