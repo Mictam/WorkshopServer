@@ -6,7 +6,7 @@ import datetime
 #----------------------------------------------------------------------------------------------------------------------#
 global Q
 global NAO_IP
-NAO_IP = '192.168.1.102'
+NAO_IP = '192.168.1.104'
 global NAO_PORT
 NAO_PORT = '9559'
 
@@ -16,11 +16,12 @@ def enqueue_speech(text, volume, speech_speed, language):
     speech_object = Speech(text, volume, speech_speed, language)
     Q.add_to_queue(speech_object)
 
-def enqueue_moving_forward(distance):
+def enqueue_moving(distance):
+    print("moving  enqueued")
     movement_object = Movement(distance)
     Q.add_to_queue(movement_object)
 
-def enqueue_turning_right(angle):
+def enqueue_turning(angle):
     turn_object = Turn(angle)
     Q.add_to_queue(turn_object)
 
@@ -40,10 +41,12 @@ def initialize_queue():
     Q.queue_listener()
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_connect_request(json_request):
-    print("handling connect request")       ####REFACTOR
+    print("handling connect request")       ####DEPRECIATED
     try:
         session = qi.Session()
+        print(json_request)
         session.connect("tcp://{}:{}".format(json_request['IP'], json_request['port']))
+        print(json_request)
     except:
         return ("Couldnt connect to the robot"), 400
 
@@ -135,7 +138,7 @@ def handle_clear_queue_request():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_add_action_request(json_request):
     print("handle_add_action_request")
-
+    print(json_request)
     if "type" in json_request:
         if json_request["type"] == "speech":
             text = json_request["text"]
@@ -148,10 +151,17 @@ def handle_add_action_request(json_request):
             command = json_request["command"]
             if command == "move_forward":
                 distance = json_request["distance"]
-                enqueue_moving_forward(distance)
+                enqueue_moving(distance)
+            elif command == "move_backward":
+                print(float(json_request["distance"]))
+                distance = float(json_request["distance"]) * (-1.0)
+                enqueue_moving(distance)
             elif command == "turn_right":
+                angle = float(json_request["angle"]) * (-1.0)
+                enqueue_turning(angle)
+            elif command == "turn_left":
                 angle = json_request["angle"]
-                enqueue_turning_right(angle)
+                enqueue_turning(angle)
 
         elif json_request["type"] == "sequence":
             name = json_request["name"]
