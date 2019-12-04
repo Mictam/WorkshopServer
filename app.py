@@ -33,7 +33,7 @@ def create_new_scenario():
     result = handle_creating_new_scenario_request(request.json)
     return result
 
-@app.route('/scenarios/remove', methods=["GET"])
+@app.route('/scenarios/remove', methods=["GET"])  #TODO 2, zamockowane
 def delete_scenario():
     result = handle_deleting_scenario_request(request.args.get['name'])
     return result
@@ -45,12 +45,12 @@ def scenarios_get_details_and_run():
 	print(result)
 	return result
 
-@app.route('/scenarios', methods=["PUT"])
+@app.route('/scenarios', methods=["PUT"])    #TODO 2, zamockowane
 def modify_scenario():
     result = handle_modify_scenario_request(request.args.get['name'], request.json)
     return result
 
-@app.route('/sequences', methods=["GET"])
+@app.route('/sequences', methods=["GET"])    #TODO, zamockowane
 def get_sequences_list():
     result = handle_sequences_list_request()
     return result
@@ -65,12 +65,12 @@ def start_stop_recording():
     result = handle_recording_toggle_request(request)
     return result
 
-@app.route('/recordings', methods=["GET"])
+@app.route('/recordings', methods=["GET"])       #TODO, ale zamockowane
 def get_recordings_list():
     result = handle_recordings_list_request()
     return result
 
-@app.route('/recordings', methods=["GET"])
+@app.route('/recordings', methods=["GET"])              #TODO, ale zamockowane
 def play_recording():
     result = handle_play_recording_request(request.args.get['name'])
     return result

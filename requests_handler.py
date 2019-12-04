@@ -124,10 +124,21 @@ def handle_scenario_run_request(name, run, start, end):
 def handle_modify_scenario_request(scenario_name):
     print("handle_modify_scenario_request")
     #todo
+    return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_sequences_list_request():
     print("handle_sequences_list_request")
-    #todo
+    #todo zamockowane
+    response = {"sequences": [
+        {
+           "name": "wave right arm",
+        },
+        {
+              "name": "chacha dance",
+        }]
+    }
+    return response
+
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_media_list_request():
     print("handle_media_list_request")
@@ -168,7 +179,8 @@ def handle_recordings_list_request():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_play_recording_request(name):
     print("handle_play_recording_request")
-    #todo
+    #todo zamockowane
+    return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_get_settings_request():
     print("handle_get_settings_request")
