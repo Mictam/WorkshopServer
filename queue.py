@@ -25,7 +25,7 @@ class __Queue:
 
 	def queue_listener(self):
 		while True:
-			time.sleep(1)
+			time.sleep(0.1)
 			print('tasks in queue: ')
 			print(self.q.qsize())
 			print('currently processed request: ')

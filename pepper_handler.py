@@ -38,6 +38,7 @@ class Speech(Action):
         self.language = language
 
     def process_action(self):
+		# Pepper API calls go here
         print("saying: ")
         session1 = qi.Session()
         session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
@@ -50,7 +51,6 @@ class Speech(Action):
         print("end")
         return "Success", 200
 
-    #Pepper API calls go here
 # ----------------------------------------------------------------------------------------------------------------------#
 class Movement(Action):
     def __init__(self, distance):
@@ -90,15 +90,17 @@ class Turn(Action):
         return "Success", 200
 # ----------------------------------------------------------------------------------------------------------------------#
 class Sequence(Action):
-    def __init__(self, type, name):
-        self.type = type
+    def __init__(self, name):
         self.name = name
 
     def process_action(self):
-        session1 = qi.Session()
-        session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
-        return "Success", 200
-        #Pepper API calls go here
+		# Pepper API calls go here
+		print("Process sequence")
+		session1 = qi.Session()
+		session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+		behaviors_service1 = session1.service("ALBehaviorManager")
+		behaviors_service1.runBehavior(str(self.name), _async=True)
+		return "Success", 200
 # ----------------------------------------------------------------------------------------------------------------------#
 class MediaDisplay(Action):
 	def __init__(self, name, file_type):
@@ -106,6 +108,7 @@ class MediaDisplay(Action):
 		self.file_type = file_type
 
 	def process_action(self):
+		# Pepper API calls go here
 		print("Media Display")
 		session1 = qi.Session()
 		session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
@@ -124,9 +127,9 @@ class MediaDisplay(Action):
 
 		print(url)
 		if (str(self.file_type) == 'jpg'):
-			tabletService.showImage(url)
+			tabletService.showImage(str(url))
 		else:
-			tabletService.playVideo(url)
+			tabletService.playVideo(str(url))
 		return "Success", 200
-# Pepper API calls go here
+
 # ----------------------------------------------------------------------------------------------------------------------#

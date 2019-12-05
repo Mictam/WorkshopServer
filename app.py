@@ -4,12 +4,13 @@ from flask import request
 from concurrent.futures import ThreadPoolExecutor
 from requests_handler import *
 from pepper_handler import *
-import json
+
+
 #----------------------------------------------------------------------------------------------------------------------#
 app = Flask(__name__)
 executor = ThreadPoolExecutor(1)
 
-SERVER_IP = "192.168.1.103"
+SERVER_IP = "192.168.1.102"
 SERVER_PORT = "5000"
 #----------------------------------------------------------------------------------------------------------------------#
 @app.route('/connect', methods=["POST"])

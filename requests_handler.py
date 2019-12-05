@@ -10,6 +10,9 @@ NAO_IP = '192.168.1.104'
 global NAO_PORT
 NAO_PORT = '9559'
 
+PASSWORD = "admin"
+
+
 Q = __Queue()
 #---------------------------------------------------PRIVATE METHODS----------------------------------------------------#
 def enqueue_speech(text, volume, speech_speed, language):
@@ -42,15 +45,11 @@ def initialize_queue():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_connect_request(json_request):
     print("handling connect request")       ####DEPRECIATED
-    try:
-        session = qi.Session()
-        print(json_request)
-        session.connect("tcp://{}:{}".format(json_request['IP'], json_request['port']))
-        print(json_request)
-    except:
-        return ("Couldnt connect to the robot"), 400
+    if(json_request['password']==PASSWORD):
+        return "Successfully connected to the robot", 200
+    else:
+        return ("Invalid password dziwko"), 400
 
-    return "Successfully connected to the robot", 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_logger_request():
     print("handle_logger_request")
@@ -124,21 +123,26 @@ def handle_scenario_run_request(name, run, start, end):
 def handle_modify_scenario_request(scenario_name):
     print("handle_modify_scenario_request")
     #todo
-    return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_sequences_list_request():
     print("handle_sequences_list_request")
-    #todo zamockowane
-    response = {"sequences": [
-        {
-           "name": "wave right arm",
-        },
-        {
-              "name": "chacha dance",
-        }]
-    }
-    return response
+    session1 = qi.Session()
+    session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+    behaviors_service1 = session1.service("ALBehaviorManager")
+    names = behaviors_service1.getInstalledBehaviors()
+    print "Behaviors on the robot:"
+    #print(names)
 
+    names_converted = []
+    for name in names:
+        print name
+        names_converted.append({'name': name})
+
+    print names_converted
+
+    response = { "sequences": names_converted } # { "sequences:" names_converted }
+
+    return response, 200
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_media_list_request():
     print("handle_media_list_request")
@@ -148,8 +152,19 @@ def handle_media_list_request():
     photos = json.load(open(json_url))
     videos = json.load(open(json_url2))
 
+    photos_converted = []
+    videos_converted = []
+
+    for photo in photos:
+        print photo
+        photos_converted.append({'name': photo})
+
+    for video in videos:
+        print video
+        videos_converted.append({'name': video})
+
     merged = {
-        "photos": [photos], "videos": [videos]
+        "photos": photos_converted, "videos": videos_converted
     }
     return merged, 200
 
@@ -161,11 +176,19 @@ def handle_recording_toggle_request(request):
     session1 = qi.Session()
     session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
     camera_service1 = session1.service("ALVideoRecorder")
-    if (bool(request.args.get("status"))==False):
+
+    print(request.args.get("status"))
+    record = request.args.get("status")
+
+    camera_service1.stopRecording()
+    cmp = "False"
+
+    if(record==cmp):                  # NAPRAWIC TODO
         camera_service1.stopRecording()
     else:
         timestamp = datetime.datetime.now().isoformat()
-        camera_service1.startRecording("../Videos", timestamp)
+        camera_service1.startRecording("/home/nao/video", timestamp)
+        camera_service1.stopRecording()
 
     return "Success", 200
 #----------------------------------------------------------------------------------------------------------------------#
@@ -179,8 +202,7 @@ def handle_recordings_list_request():
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_play_recording_request(name):
     print("handle_play_recording_request")
-    #todo zamockowane
-    return "Success", 200
+    #todo
 #----------------------------------------------------------------------------------------------------------------------#
 def handle_get_settings_request():
     print("handle_get_settings_request")
