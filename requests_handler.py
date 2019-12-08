@@ -173,17 +173,16 @@ def handle_recording_toggle_request(request):
     print("handle_recording_toggle_request")
     if "status" not in request.args:
         return '"status" not provided in request', 400
-    session1 = qi.Session()
-    session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
-    camera_service1 = session1.service("ALVideoRecorder")
 
     print(request.args.get("status"))
     record = request.args.get("status")
 
+    session1 = qi.Session()
+    session1.connect("tcp://{}:{}".format(NAO_IP, NAO_PORT))
+    camera_service1 = session1.service("ALVideoRecorder")
     camera_service1.stopRecording()
-    cmp = "False"
 
-    if(record==cmp):                  # NAPRAWIC TODO
+    if(record=="False"):                
         camera_service1.stopRecording()
     else:
         timestamp = datetime.datetime.now().isoformat()
